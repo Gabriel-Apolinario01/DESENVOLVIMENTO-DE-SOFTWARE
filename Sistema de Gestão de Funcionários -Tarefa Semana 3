@@ -1,0 +1,153 @@
+import tkinter as tk
+from tkinter import messagebox, simpledialog
+
+# Classes de funcionários
+class Funcionario:
+    def __init__(self, nome, idade, genero, matricula, salario_base):
+        self.nome = nome
+        self.idade = idade
+        self.genero = genero.upper()  # M ou F
+        self.matricula = matricula
+        self.salario_base = salario_base
+
+    def calcular_salario(self):
+        return self.salario_base
+
+    def __str__(self):
+        genero_str = "Masculino" if self.genero == "M" else "Feminino"
+        return (f"{self.__class__.__name__} - Nome: {self.nome}, Idade: {self.idade}, Gênero: {genero_str}, "
+                f"Matrícula: {self.matricula}, Salário: R${self.calcular_salario():.2f}")
+
+
+class Administrativo(Funcionario):
+    def calcular_salario(self):
+        return self.salario_base
+
+
+class Professor(Funcionario):
+    def __init__(self, nome, idade, genero, matricula, horas_aula, valor_hora):
+        super().__init__(nome, idade, genero, matricula, 0)
+        self.horas_aula = horas_aula
+        self.valor_hora = valor_hora
+
+    def calcular_salario(self):
+        return self.horas_aula * self.valor_hora
+
+
+class Tecnico(Funcionario):
+    def __init__(self, nome, idade, genero, matricula, salario_base, bonus=0):
+        super().__init__(nome, idade, genero, matricula, salario_base)
+        self.bonus = bonus
+
+    def calcular_salario(self):
+        return self.salario_base + self.bonus
+
+
+# Sistema de Gestão
+class SistemaGestao:
+    def __init__(self):
+        self.funcionarios = []
+
+    def adicionar_funcionario(self, funcionario):
+        self.funcionarios.append(funcionario)
+
+    def remover_funcionario(self, matricula):
+        for f in self.funcionarios:
+            if f.matricula == matricula:
+                self.funcionarios.remove(f)
+                return True
+        return False
+
+    def listar_funcionarios(self):
+        return [str(f) for f in self.funcionarios]
+
+    def folha_pagamento(self):
+        return sum(f.calcular_salario() for f in self.funcionarios)
+
+
+# Interface
+class SistemaGUI:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Sistema de Gestão de Funcionários")
+        self.sistema = SistemaGestao()
+
+        # Botões principais
+        tk.Button(master, text="Adicionar Funcionário", width=30, command=self.adicionar_funcionario).pack(pady=5)
+        tk.Button(master, text="Remover Funcionário", width=30, command=self.remover_funcionario).pack(pady=5)
+        tk.Button(master, text="Listar Funcionários", width=30, command=self.listar_funcionarios).pack(pady=5)
+        tk.Button(master, text="Folha de Pagamento", width=30, command=self.mostrar_folha).pack(pady=5)
+        tk.Button(master, text="Sair", width=30, command=master.quit).pack(pady=5)
+
+    def adicionar_funcionario(self):
+        tipo = simpledialog.askstring("Tipo", "Escolha o tipo (1-Administrativo, 2-Professor, 3-Técnico):")
+        if tipo not in ("1", "2", "3"):
+            messagebox.showerror("Erro", "Tipo inválido!")
+            return
+
+        nome = simpledialog.askstring("Nome", "Nome:")
+        if not nome:
+            return
+        idade = simpledialog.askinteger("Idade", "Idade:")
+        if idade is None:
+            return
+        genero = simpledialog.askstring("Gênero", "Gênero (M/F):")
+        if not genero:
+            return
+        matricula = simpledialog.askstring("Matrícula", "Matrícula:")
+        if not matricula:
+            return
+
+        if tipo == "1":  # Administrativo
+            salario = simpledialog.askfloat("Salário", "Salário base:")
+            if salario is None:
+                return
+            f = Administrativo(nome, idade, genero, matricula, salario)
+
+        elif tipo == "2":  # Professor
+            horas = simpledialog.askinteger("Horas", "Horas de aula:")
+            if horas is None:
+                return
+            valor_hora = simpledialog.askfloat("Valor", "Valor por hora:")
+            if valor_hora is None:
+                return
+            f = Professor(nome, idade, genero, matricula, horas, valor_hora)
+
+        else:  # Técnico
+            salario = simpledialog.askfloat("Salário", "Salário base:")
+            if salario is None:
+                return
+            bonus = simpledialog.askfloat("Bônus", "Bônus de produtividade:")
+            if bonus is None:
+                bonus = 0
+            f = Tecnico(nome, idade, genero, matricula, salario, bonus)
+
+        self.sistema.adicionar_funcionario(f)
+        messagebox.showinfo("Sucesso", "Funcionário adicionado com sucesso!")
+
+    def remover_funcionario(self):
+        matricula = simpledialog.askstring("Remover", "Digite a matrícula do funcionário:")
+        if not matricula:
+            return
+        if self.sistema.remover_funcionario(matricula):
+            messagebox.showinfo("Sucesso", "Funcionário removido.")
+        else:
+            messagebox.showerror("Erro", "Funcionário não encontrado.")
+
+    def listar_funcionarios(self):
+        lista = self.sistema.listar_funcionarios()
+        if not lista:
+            messagebox.showinfo("Funcionários", "Nenhum funcionário cadastrado.")
+        else:
+            messagebox.showinfo("Funcionários", "\n".join(lista))
+
+    def mostrar_folha(self):
+        total = self.sistema.folha_pagamento()
+        messagebox.showinfo("Folha de Pagamento", f"Total da folha de pagamento: R$ {total:.2f}")
+
+
+# Execução do Tkinter
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = SistemaGUI(root)
+    root.mainloop()
