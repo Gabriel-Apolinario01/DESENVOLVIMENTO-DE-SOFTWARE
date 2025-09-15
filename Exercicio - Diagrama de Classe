@@ -1,0 +1,131 @@
+#Exercicio - Diagrama de Classe
+
+from datetime import date
+
+# Classes:
+
+class Historico: # Serve para armazenar o histórico de transações de uma conta
+
+    def __init__(self):
+        self._transacoes = []
+
+    @property
+    def transacoes(self):
+        return self._transacoes
+
+    def adicionar_transacao(self, tipo, valor): # Serve para adiciona uma nova transação ao histórico
+        self._transacoes.append({
+            "tipo": tipo,
+            "valor": valor,
+            "data": date.today().strftime("%d-%m-%Y"),
+        })
+
+
+class Conta:
+
+    def __init__(self, numero, cliente):
+        self._saldo = 0.0
+        self._numero = numero
+        self._agencia = "0001"
+        self._cliente = cliente
+        self._historico = Historico()
+
+    @property
+    def saldo(self):
+        return self._saldo
+
+    @property
+    def numero(self):
+        return self._numero
+
+    @property
+    def agencia(self):
+        return self._agencia
+
+    @property
+    def cliente(self):
+        return self._cliente
+
+    @property
+    def historico(self):
+        return self._historico
+
+    def sacar(self, valor): # Realiza saque na conta
+        if valor <= 0 or valor > self._saldo:
+            return False
+        self._saldo -= valor
+        self._historico.adicionar_transacao("Saque", valor)
+        return True
+
+    def depositar(self, valor): #realiza deposito na conta
+        if valor <= 0:
+            return False
+        self._saldo += valor
+        self._historico.adicionar_transacao("Deposito", valor)
+        return True
+
+
+class Cliente:
+    def __init__(self, nome, cpf, endereco):
+        self._nome = nome
+        self._cpf = cpf
+        self._endereco = endereco
+        self._contas = []
+
+    @property
+    def nome(self):
+        return self._nome
+
+    @property
+    def cpf(self):
+        return self._cpf
+
+    @property
+    def endereco(self):
+        return self._endereco
+
+    def adicionar_conta(self, conta): # Adiciona uma nova conta ao cliente
+        self._contas.append(conta)
+
+    def realizar_transacao(self, conta, tipo, valor):  #Executa uma transação
+
+        if tipo == "saque":
+            if conta.sacar(valor):
+                print(f"Saque de R$ {valor:.2f} realizado com sucesso!")
+            else:
+                print("Operação de saque falhou.")
+        elif tipo == "deposito":
+            if conta.depositar(valor):
+                print(f"Deposito de R$ {valor:.2f} realizado com sucesso!")
+            else:
+                print("Operação de depósito falhou.")
+        else:
+            print("Tipo de transação inválido.")
+
+
+# Exemplo:
+if __name__ == "__main__":
+    # Cria um cliente
+    cliente1 = Cliente(nome="gabriel Silva", cpf="820.277.333-05", endereco="Rua alves, 101")
+
+    # Cria uma conta para o cliente
+    conta1 = Conta(numero=1, cliente=cliente1)
+    cliente1.adicionar_conta(conta1)
+
+    # Realiza as transações
+    cliente1.realizar_transacao(conta1, "deposito", 500.0)
+    cliente1.realizar_transacao(conta1, "saque", 150.0)
+    cliente1.realizar_transacao(conta1, "saque", 400.0)  # O saque falha se o saldo for insuficiente
+
+    # Exibi o saldo e o histórico
+    print("\n INFORMACOES DA CONTA:")
+    print(f"Cliente: {conta1.cliente.nome}")
+    print(f"Número da Conta: {conta1.numero}")
+    print(f"Saldo atual: R$ {conta1.saldo:.2f}")
+
+    print("\n HISTORICO DE TRANSAÇÕES:")
+    if not conta1.historico.transacoes:
+        print("Nenhuma transação registrada.")
+    else:
+        for transacao in conta1.historico.transacoes:
+            print(f"{transacao['tipo']} - R$ {transacao['valor']:.2f} - Data: {transacao['data']}")
